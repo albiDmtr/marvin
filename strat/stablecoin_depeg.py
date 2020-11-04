@@ -43,7 +43,7 @@ class strat():
 
 			def amount_above(limit, fees=False):
 				if fees:
-					self.applied_fees = fees['taker']
+					self.applied_fees = self.fees['taker']
 				else:
 					self.applied_fees = 0
 
@@ -77,7 +77,7 @@ class strat():
 			if max_size:
 				logging.info(f'Executing swap to {self.market.base}.')
 				# TODO csekkolja, hogy minimum order size felett legyen
-				await self.market.swap_to(self.market.base,'market',swap_to_amount=min([max_size,self.market.balance['quote']]))
+				await self.market.swap_to(self.market.base,'market',swap_to_amount=max_size,cut_overspending=True)
 				trades_logger.info(f'Swapped to {self.market.base} at {current_rate}, balances: {self.market.balance}')
 
 		if current_rate > self.upper_threshold and self.market.balance['base'] > hypers.min_stabelcoin_trade_amount:
@@ -87,5 +87,11 @@ class strat():
 			if max_size:
 				logging.info(f'Executing swap to {self.market.quote}.')
 				# TODO csekkolja, hogy minimum order size felett legyen
-				await self.market.swap_to(self.market.quote,'market',swap_to_amount=min([max_size,self.market.balance['base']]))
+				# mivanitt?
+				# azt mondja, hogy át szeretné váltani minden pénzét.
+				# a max_size az jó pénznemben van?
+				# nem, az mindig swap_to_amountra mondja. tényleg?
+				# tényleg. tehát van egy swap to amountos max_sizeunk és egy swap_from_amountos max elkölthető pénzünk
+				# csináljuk egy cuccot a swaptoba, ami magától levágja a túllógó részeket
+				await self.market.swap_to(self.market.quote,'market',swap_to_amount=max_size,cut_overspending=True)
 				trades_logger.info(f'Swapped to {self.market.quote} at {current_rate}, balances: {self.market.balance}')

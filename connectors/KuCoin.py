@@ -191,7 +191,7 @@ class market:
 					logging.error(f'KuCoin Get balance failed {except_count} times. Error: {e}')
 					raise
 
-	async def swap_to(self, currency_to_buy,order_type,swap_to_amount=False,swap_from_amount=False):
+	async def swap_to(self, currency_to_buy,order_type,swap_to_amount=False,swap_from_amount=False,cut_overspending=True):
 
 		# checking if amount given
 		if not swap_to_amount and not swap_from_amount:
@@ -214,10 +214,10 @@ class market:
 
 		# translating % amounts to normal amounts
 		from_currency = self.pair.split('/')[1] if currency_to_buy in self.pair.split('/')[0] else self.pair.split('/')[0]
-		if '%' in swap_to_amount:
+		if '%' in str(swap_to_amount):
 			rate = int(swap_to_amount.split('%')[0])/100
 			amount = [self.get_balance('free',currency=from_currency)*rate,'from']
-		elif '%' in swap_from_amount:
+		elif '%' in str(swap_from_amount):
 			rate = int(swap_from_amount.split('%')[0])/100
 			amount = [self.get_balance('free',currency=from_currency)*rate,'from']
 		elif swap_to_amount:
@@ -225,8 +225,10 @@ class market:
 		elif swap_from_amount:
 			amount = [swap_from_amount,'from']
 
-		# verified
-		async def quote_to_base(quote_amount):
+		# verified, only set dismiss_liquidity_error to True when using market orders!
+		async def quote_to_base(quote_amount, dismiss_liquidity_error=False):
+			# ezt mi okozhatja?
+			#
 			base_amount = 0
 			quote_left = quote_amount
 			# baset akarunk venni, buyolni akarunk, tehát mi bidelnénk ha ez limit lenne, askot veszünk
@@ -242,7 +244,7 @@ class market:
 					base_amount += (quote_left / current_order_quote_price)*current_order[1]
 					quote_left = 0
 					break
-			if quote_left != 0:
+			if quote_left != 0 and not dismiss_liquidity_error:
 				raise ValueError('Not enough liquidity to perform transaction.')
 			return base_amount
 		
@@ -250,16 +252,42 @@ class market:
 		except_count = 0
 		while except_count < hypers.HTTP_API_retry_count:
 			try:
+				# verified, checking for overspending
+				if cut_overspending:
+					# if spending quote
+					if direction == 'buy':
+						# if amount was given is base
+						if amount[1] == 'to':
+							amount[0] = min([amount[0], await quote_to_base(self.balance['quote'], dismiss_liquidity_error=True)])
+						# if amount was given in quote
+						else:
+							amount[0] = min([amount[0], self.balance['quote']])
+					# if spending base
+					else:
+						# if amount was given in quote
+						if amount[1] == 'to':
+							amount[0] =  min([await quote_to_base(amount[0], dismiss_liquidity_error=True),self.balance['base']])
+							amount[1] = 'from'
+						# if amount was given in base
+						else:
+							amount[0] = min([amount[0], self.balance['base']])
+
 				# Changing amount to be in base currency
 				if direction == 'buy':
 					amount_in_base = amount[0] if amount[1] == 'to' else await quote_to_base(amount[0])
 				elif direction == 'sell':
 					amount_in_base = amount[0] if amount[1] == 'from' else await quote_to_base(amount[0])
+				
+				# mi történik?
+				# a strat rendesen meghívja ezt, ez meg is csinálja az ordert, de valami miatt retryol.
+				# csak másodjára lesz except
+				# 
 
 				await self.ex.create_order(self.pair, order_type, direction, amount_in_base)
-				self.balance = self.get_balance('total')
-				self.balance = {'base' : self.balance[self.base], 'quote' : self.balance[self.quote]}
+				self.new_balance = await self.get_balance('total')
+				self.balance = {'base' : self.new_balance[self.base], 'quote' : self.new_balance[self.quote]}
 				except_count = 0
+				break
 			except Exception as e:
 				except_count += 1
 				logging.warning(f'KuCoin Unable to create order ({except_count}. try). Error: {e}')

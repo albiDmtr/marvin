@@ -24,8 +24,9 @@ class sandbox_kucoin(ccxt.kucoin):
             quote_amount = 0
             base_left = base_amount
             # quotet akarunk venni, sellelni akarunk, tehát mi askolnánk ha ez limit lenne, bidet veszünk
-            orders = await self.get_current_book()['bids']
-            starting_price = orders[0]
+            orders = await self.fetch_l2_order_book(symbol)
+            orders = orders['bids']
+            starting_price = orders[0][0]
             for current_order in orders:
                 # total price of order in base
                 current_order_base_price = current_order[1]
