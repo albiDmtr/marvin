@@ -48,3 +48,13 @@
 2020-11-04 23:24:14,397 INFO 0.601214 USDT buy transaction on USDT/DAI market at KuCoin, starting price was 0.999, ending price was 0.999, slippage is 0.0.
 2020-11-04 23:24:42,633 INFO 66.466447 USDT buy transaction on USDT/DAI market at KuCoin, starting price was 0.9986, ending price was 0.9983, slippage is 0.000300000000000078.
 2020-11-04 23:24:48,352 INFO 15.35718561099403 USDT buy transaction on USDT/DAI market at KuCoin, starting price was 0.9986, ending price was 0.9986, slippage is 0.0.
+2020-11-05 10:50:14,133 INFO Orderbook is: [[0.9968, 54.234531], [0.9967, 900.663429], [0.9966, 1610.900389]]
+2020-11-05 10:50:14,135 INFO 122.26473 USDT buy transaction on USDT/DAI market at KuCoin, starting price was 0.9968, ending price was 0.9967, slippage is 9.999999999998899e-05.
+2020-11-05 10:50:19,341 INFO Orderbook is: [[0.9968, 54.234531], [0.9967, 900.663429], [0.9966, 1610.900389]]
+2020-11-05 10:50:19,342 INFO 122.26473 USDT buy transaction on USDT/DAI market at KuCoin, starting price was 0.9968, ending price was 0.9967, slippage is 9.999999999998899e-05.
+2020-11-05 10:50:23,323 INFO Orderbook is: [[0.9968, 54.234531], [0.9967, 900.663429], [0.9966, 1610.900389]]
+2020-11-05 10:50:23,324 INFO 122.26473 USDT buy transaction on USDT/DAI market at KuCoin, starting price was 0.9968, ending price was 0.9967, slippage is 9.999999999998899e-05.
+2020-11-05 10:50:27,839 INFO Orderbook is: [[0.9968, 54.234531], [0.9967, 900.663429], [0.9966, 1610.900389]]
+2020-11-05 10:50:27,840 INFO 122.26473 USDT buy transaction on USDT/DAI market at KuCoin, starting price was 0.9968, ending price was 0.9967, slippage is 9.999999999998899e-05.
+2020-11-05 10:50:31,798 INFO Orderbook is: [[0.9968, 54.234531], [0.9967, 900.663429], [0.9966, 1610.900389]]
+2020-11-05 10:50:31,799 INFO 12.569732848861634 USDT buy transaction on USDT/DAI market at KuCoin, starting price was 0.9968, ending price was 0.9968, slippage is 0.0.
