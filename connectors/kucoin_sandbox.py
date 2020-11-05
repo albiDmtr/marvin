@@ -26,6 +26,7 @@ class sandbox_kucoin(ccxt.kucoin):
             # quotet akarunk venni, sellelni akarunk, tehát mi askolnánk ha ez limit lenne, bidet veszünk
             orders = await self.fetch_l2_order_book(symbol)
             orders = orders['bids']
+            slippage_logger.info(f'Orderbook is: {orders[0:3]}')
             starting_price = orders[0][0]
             for current_order in orders:
                 # total price of order in base

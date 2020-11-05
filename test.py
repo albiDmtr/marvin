@@ -20,7 +20,6 @@ async def vau(loop):
 loop = asyncio.get_event_loop()
 loop.run_until_complete(vau(loop))"""
 
-def test(a, b=False):
-    print(b)
 
-test('heló',True)
+a = [0,1,2,3,4]
+print(a[0:3])

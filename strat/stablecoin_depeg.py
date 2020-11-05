@@ -8,11 +8,15 @@ import os.path
 
 # configuring logger
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
-trades_logger = logging.getLogger('trades')
 trades_hdlr = logging.FileHandler(f'{os.path.dirname(__file__)}/../logs/results/trades.log')
+prices_hdlr = logging.FileHandler(f'{os.path.dirname(__file__)}/../logs/prices.log')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+trades_logger = logging.getLogger('trades')
 trades_hdlr.setFormatter(formatter)
 trades_logger.addHandler(trades_hdlr)
+prices_logger = logging.getLogger('prices')
+prices_hdlr.setFormatter(formatter)
+prices_logger.addHandler(prices_hdlr)
 
 async def create_strat(market, loop, strat_specific_params={'ma_dp_count':'25','ma_res':'5m','threshold':0.2}):
 	obj = strat(market, strat_specific_params)
@@ -68,9 +72,9 @@ class strat():
 		self.prices_len = len(self.past_prices)
 		self.lower_threshold = self.past_prices[math.floor( self.prices_len*self.threshold )]
 		self.upper_threshold = self.past_prices[self.prices_len - math.floor( self.prices_len*self.threshold )]
-		current_rate = await self.market.get_current_mid_price()	
-		print(f'Current rate is {current_rate}.', end="\r")
-		if current_rate < self.lower_threshold and self.market.balance['quote'] > hypers.min_stabelcoin_trade_amount:
+		current_rates = await self.market.get_current_price('both')
+		prices_logger.info(f'Current rates are {current_rates}.')
+		if current_rates['ask'] < self.lower_threshold and self.market.balance['quote'] > hypers.min_stabelcoin_trade_amount:
 			logging.info(f'Examining swap to {self.market.base}.')
 			# examine swap to base
 			max_size = await self.calculate_max_order_size('asks', self.lower_threshold, self.past_prices)
@@ -78,20 +82,13 @@ class strat():
 				logging.info(f'Executing swap to {self.market.base}.')
 				# TODO csekkolja, hogy minimum order size felett legyen
 				await self.market.swap_to(self.market.base,'market',swap_to_amount=max_size,cut_overspending=True)
-				trades_logger.info(f'Swapped to {self.market.base} at {current_rate}, balances: {self.market.balance}')
+				trades_logger.info(f'Swapped to {self.market.base} at {current_rates["ask"]}, balances: {self.market.balance}')
 
-		if current_rate > self.upper_threshold and self.market.balance['base'] > hypers.min_stabelcoin_trade_amount:
+		if current_rates['bid'] > self.upper_threshold and self.market.balance['base'] > hypers.min_stabelcoin_trade_amount:
 			logging.info(f'Examining swap to {self.market.quote}.')
 			# examine swap to quote
 			max_size = await self.calculate_max_order_size('bids', self.upper_threshold, self.past_prices)
 			if max_size:
 				logging.info(f'Executing swap to {self.market.quote}.')
-				# TODO csekkolja, hogy minimum order size felett legyen
-				# mivanitt?
-				# azt mondja, hogy át szeretné váltani minden pénzét.
-				# a max_size az jó pénznemben van?
-				# nem, az mindig swap_to_amountra mondja. tényleg?
-				# tényleg. tehát van egy swap to amountos max_sizeunk és egy swap_from_amountos max elkölthető pénzünk
-				# csináljuk egy cuccot a swaptoba, ami magától levágja a túllógó részeket
 				await self.market.swap_to(self.market.quote,'market',swap_to_amount=max_size,cut_overspending=True)
-				trades_logger.info(f'Swapped to {self.market.quote} at {current_rate}, balances: {self.market.balance}')
+				trades_logger.info(f'Swapped to {self.market.quote} at {current_rates["bid"]}, max_size is: {max_size}, balances: {self.market.balance}')

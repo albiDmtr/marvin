@@ -146,19 +146,27 @@ class market:
 		def deactivate(self):
 			self.__is_active = False
 
-	async def get_current_mid_price(self):
+	async def get_current_price(self,side):
 		except_count = 0
 		while except_count < hypers.HTTP_API_retry_count:
 			try:
 				self.__current = await self.ex.fetchTicker(self.pair)
 				except_count = 0
-				return (self.__current['bid']+self.__current['ask'])/2
+				break
 			except Exception as e:
 				except_count += 1
 				logging.warning(f'KuCoin Unable to get current mid price ({except_count}. try).')
 				if except_count >= hypers.HTTP_API_retry_count:
 					logging.error(f'KuCoin Get current mid price failed {except_count} times. Error: {e}')
 					raise
+		if side == 'mid':
+			return (self.__current['bid']+self.__current['ask'])/2
+		elif side == 'ask':
+			return self.__current['ask']
+		elif side == 'bid':
+			return self.__current['bid']
+		elif side == 'both':
+			return {'bid':self.__current['bid'],'ask':self.__current['ask']}
 
 	async def get_current_book(self):
 		except_count = 0

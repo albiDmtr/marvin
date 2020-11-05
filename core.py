@@ -38,10 +38,8 @@ async def import_modules():
 		# menjen fel píz a kucoinra, menjen a bot cloudba
 		# csináljuk meg a sanity checkeket
 		#
-		# Nem megy ez a geci. Mi van? Lehet, hogy az árakat nem jól kapja, meg lehet, hogy a logic szar
-		# (külön lehet, hogy egy kicsivel szigorúbb).
-		# Vagy egy balance emulátort csinálunk, vagy már csak élesben fog tudni menni.
-		# Írjuk meg gyorsbaokosba a tesztet
+		# Miért csinál ilyen kicsi ordereket? Tényleg vannak bent 1 centes orderek?
+		# A mid árakat látva, tényleg addig tradel a bot, ameddig el nem viszi más az adott ordert?
 
 async def main():
 	i = 0
