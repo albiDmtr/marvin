@@ -85,3 +85,4 @@
 2020-11-05 10:50:23,328 INFO Swapped to USDT at 0.9971, balances: {'base': 866.79419, 'quote': 134.39996046769994}
 2020-11-05 10:50:27,844 INFO Swapped to USDT at 0.9971, balances: {'base': 989.05892, 'quote': 12.533280623599936}
 2020-11-05 10:50:31,803 INFO Swapped to USDT at 0.9971, balances: {'base': 1001.6286528488615, 'quote': 0.0037709198546593825}
+2020-11-05 12:28:15,708 INFO Market initialised, balances: {'base': 500, 'quote': 500}

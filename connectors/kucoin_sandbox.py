@@ -55,6 +55,20 @@ class sandbox_kucoin(ccxt.kucoin):
         # Vagy l3 orderbook alapján konkrét orderekkel megoldva, vagy l2-vel úgy, hogy feljegyezzük, milyen
         # ordereket használtunk fel, viszont a mennyiségeik szépen lassan fogynak, és amikor átszámolunk, ha adott
         # áron van ezen a listán, akkor csak akkorának tekintjük az ordert, amennyivel nagyobb annál, mint ami a listán van
+        # 
+        # Vannak orderek a bookban. Mi elhasználjuk a legjobbakat. Mások is használják őket, meg cancelelik is őket.
+        # Azt kéne tudnunk megoldani, hogy kétszer ne tudjuk elhasználni ugyanazt az ordert. <- ezt az
+        # Viszont idővel visszafolyna a likviditás. Igen, viszont ezt mi leszarjuk
+        # Itt annyit csinál a cucc, hogy átszámol baset quoteba és levonja/hozzáadja a balancehoz
+        # ÁÁCSI
+        # Mindegy, melyik oldaláról fogyasztunk a booknak? Miért a bideket nézi akkor is ha venni akarunk?
+        # Normális esetben azt mondod buy 1000, az exchange fogja magát, és az askokat addig pörgeti, ameddig meg
+        # nincs az 1000.
+        # Ez a szar viszont a bideket pörgeti addig.
+        # Az orderbook asszimetrikus
+        # Tényleg szar az egész?
+        # Attól függően, hogy baseből váltasz át quoteba vagy quoteból basebe, más lesz a slippage
+        # 
 
         # updating balances
         quote_amount = await base_to_quote(amount)

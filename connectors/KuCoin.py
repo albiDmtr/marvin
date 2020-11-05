@@ -306,5 +306,20 @@ class market:
 	async def get_trading_fees(self):
 		return {'taker': self.ex.fees['trading']['taker'],'maker': self.ex.fees['trading']['maker']}
 
+	async def get_min_amount(self):
+		except_count = 0
+		while except_count < hypers.HTTP_API_retry_count:
+			try:
+				markets = await self.ex.fetch_markets()
+				min_amount = list(filter(lambda x: (x['symbol'] == self.pair), markets))[0]['limits']['amount']['min']
+				return min_amount
+			except Exception as e:
+				except_count += 1
+				logging.warning(f'KuCoin Unable to get min amounts ({except_count}. try).')
+				await asyncio.sleep(hypers.HTTP_API_retry_sleep_s)
+				if except_count >= hypers.HTTP_API_retry_count:
+					logging.error(f'KuCoin get min amount failed {except_count} times. Error: {e}')
+					raise
+
 	async def drop_exchange(self):
 		self.ex.close()

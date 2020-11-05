@@ -31,6 +31,7 @@ class strat():
 		self.market = market
 		self.money_in_base = self.market.balance
 		self.money_in_base = self.money_in_base['base'] if self.money_in_base['base'] > self.money_in_base['quote'] else self.money_in_base['quote']
+		self.min_amount = self.market.get_min_amount()
 
 	# ITTARTUNK a kód validálással, olyan sorrendben megyünk, ahogy tényleg történnek a dolgok
 	async def _init(self, loop):
@@ -78,7 +79,7 @@ class strat():
 			logging.info(f'Examining swap to {self.market.base}.')
 			# examine swap to base
 			max_size = await self.calculate_max_order_size('asks', self.lower_threshold, self.past_prices)
-			if max_size:
+			if max_size >= self.min_amount:
 				logging.info(f'Executing swap to {self.market.base}.')
 				# TODO csekkolja, hogy minimum order size felett legyen
 				await self.market.swap_to(self.market.base,'market',swap_to_amount=max_size,cut_overspending=True)
@@ -88,7 +89,8 @@ class strat():
 			logging.info(f'Examining swap to {self.market.quote}.')
 			# examine swap to quote
 			max_size = await self.calculate_max_order_size('bids', self.upper_threshold, self.past_prices)
-			if max_size:
+			# különben itt a min_amount nem teljesen jó, mert swap_from amountban van
+			if max_size >= self.min_amount:
 				logging.info(f'Executing swap to {self.market.quote}.')
 				await self.market.swap_to(self.market.quote,'market',swap_to_amount=max_size,cut_overspending=True)
 				trades_logger.info(f'Swapped to {self.market.quote} at {current_rates["bid"]}, max_size is: {max_size}, balances: {self.market.balance}')

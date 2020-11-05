@@ -38,6 +38,22 @@ async def import_modules():
 		# menjen fel píz a kucoinra, menjen a bot cloudba
 		# csináljuk meg a sanity checkeket
 		#
+		# A botnak nem muszáj felhő tesztüzemben, de nagyon nem baj.
+		# És vannak más dolgok, amiket szintén lehetne rajta csinálni tesztüzemben is, multimarket tipikusan ilyen.
+		# Az van a felhővel hogy amúgy pár óra, csak nem értünk hozzá.
+		# Egyelőre haggyuk a felhőt, upgradeket csinálunk.
+		# Upgradek:
+		#	Multimarket
+		# 	Ezt hogyan tudjuk megoldani?
+		#	Oké, több market instance lesz, ez tök egyértelmű
+		# 	Sandbox tudja ezt kezelni?
+		#	stratnál pedig összekötünk mindent mindennel, és a legjobb dealbe rakjuk a pízt
+		#	viszont itt már kellhet gondolkodni, hogy mikor éri meg berakni, nem-e?
+		#	
+		# Order blacklisting vagy multimarket?
+		#	Egyelőre nem tudni, megy-e a bot, a multimarketet érdemes lehet megcsinálni akkor is ha nem megy.
+		#	Az order blacklisting pedig ameddig tesztüzemben van, egy biztosabb képet tud adni, megy-e.
+		# 
 		# Miért csinál ilyen kicsi ordereket? Tényleg vannak bent 1 centes orderek?
 		# A mid árakat látva, tényleg addig tradel a bot, ameddig el nem viszi más az adott ordert?
 

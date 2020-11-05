@@ -21,5 +21,12 @@ loop = asyncio.get_event_loop()
 loop.run_until_complete(vau(loop))"""
 
 
-a = [0,1,2,3,4]
-print(a[0:3])
+def test(a):
+	print(a)
+	print(a)
+
+def eki(a,func):
+	func(a)
+	func('vau')
+
+eki('ie',test)
