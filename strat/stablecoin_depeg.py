@@ -67,6 +67,13 @@ class strat():
 
 
 	async def exec(self):
+		# TODO past_pricesba középárfolyam kerül
+		# a current viszont ugye a szopatós. Mindig a rosszabb.
+		# a thresholdok középárfolyamból vannak számolva, a max order size pedig csak a tresholdokat használja
+		# tehát a calc_maxhoz nincs használva a current_price
+		# Ha viszont az examining előtt volt a szopatós rész, akkor miért nem csinált tradet ez a szar?
+		# 
+
 		self.past_prices = [x[1] for x in self.price_store.get_past_prices()]
 		self.past_prices.sort()
 		# biztosamibiztos counting len of prices, even though dp_count is given
@@ -74,18 +81,18 @@ class strat():
 		self.lower_threshold = self.past_prices[math.floor( self.prices_len*self.threshold )]
 		self.upper_threshold = self.past_prices[self.prices_len - math.floor( self.prices_len*self.threshold )]
 		current_rates = await self.market.get_current_price('both')
+		current_mid_rate = sum(current_rates)/2
 		prices_logger.info(f'Current rates are {current_rates}.')
-		if current_rates['ask'] < self.lower_threshold and self.market.balance['quote'] > hypers.min_stabelcoin_trade_amount:
+		if current_mid_rate < self.lower_threshold and self.market.balance['quote'] > hypers.min_stabelcoin_trade_amount:
 			logging.info(f'Examining swap to {self.market.base}.')
 			# examine swap to base
 			max_size = await self.calculate_max_order_size('asks', self.lower_threshold, self.past_prices)
 			if max_size >= self.min_amount:
 				logging.info(f'Executing swap to {self.market.base}.')
-				# TODO csekkolja, hogy minimum order size felett legyen
 				await self.market.swap_to(self.market.base,'market',swap_to_amount=max_size,cut_overspending=True)
 				trades_logger.info(f'Swapped to {self.market.base} at {current_rates["ask"]}, balances: {self.market.balance}')
 
-		if current_rates['bid'] > self.upper_threshold and self.market.balance['base'] > hypers.min_stabelcoin_trade_amount:
+		if current_mid_rate > self.upper_threshold and self.market.balance['base'] > hypers.min_stabelcoin_trade_amount:
 			logging.info(f'Examining swap to {self.market.quote}.')
 			# examine swap to quote
 			max_size = await self.calculate_max_order_size('bids', self.upper_threshold, self.past_prices)
