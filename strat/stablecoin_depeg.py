@@ -72,7 +72,11 @@ class strat():
 		# a thresholdok középárfolyamból vannak számolva, a max order size pedig csak a tresholdokat használja
 		# tehát a calc_maxhoz nincs használva a current_price
 		# Ha viszont az examining előtt volt a szopatós rész, akkor miért nem csinált tradet ez a szar?
-		# 
+		
+		# Mi legyen? Az fix, hogy heroku a legegyszerűbb, és annál nagyobb számítási teljesítmény még egy darabig
+		# nem fog kelleni.
+		# És az is fix, hogy ha herokuval nem tudjuk megoldani, komolyabb cloud már csak productionben lesz.
+		
 
 		self.past_prices = [x[1] for x in self.price_store.get_past_prices()]
 		self.past_prices.sort()
