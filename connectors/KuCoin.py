@@ -5,7 +5,6 @@ import json
 import asyncio
 import logging
 import hypers
-# hue
 from helpers import virtual_tx
 
 # configuring logger
