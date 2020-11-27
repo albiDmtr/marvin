@@ -1,6 +1,7 @@
 import ccxt.async_support as ccxt
 import os.path
 import logging
+from helpers import virtual_tx
 slippage_logger = logging.getLogger('slippage')
 slippage_hdlr = logging.FileHandler(f'{os.path.dirname(__file__)}/../logs/slippages.log')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -19,59 +20,20 @@ class sandbox_kucoin(ccxt.kucoin):
         self.base = symbol.split('/')[0]
         self.quote = symbol.split('/')[1]
 
-        # verified
-        async def base_to_quote(base_amount):
-            quote_amount = 0
-            base_left = base_amount
-            # quotet akarunk venni, sellelni akarunk, tehát mi askolnánk ha ez limit lenne, bidet veszünk
-            orders = await self.fetch_l2_order_book(symbol)
-            orders = orders['bids']
-            slippage_logger.info(f'Orderbook is: {orders[0:3]}')
-            starting_price = orders[0][0]
-            for current_order in orders:
-                # total price of order in base
-                current_order_base_price = current_order[1]
-                if current_order_base_price < base_left:
-                    quote_amount += current_order[0]*current_order[1]
-                    base_left -= current_order_base_price
-                else:
-                    quote_amount += base_left*current_order[0]
-                    ending_price = current_order[0]
-                    base_left = 0
-                    break
-            # check if there were enough liquidity to use up all base
-            if base_left != 0:
-                raise ValueError('Not enough liquidity.')
-            slippage_logger.info(f'{amount} {self.base} {side} transaction on {symbol} market at KuCoin, starting price was {starting_price}, ending price was {ending_price}, slippage is {starting_price - ending_price}.')
-            return quote_amount
-
         # checking if amount bigger than minimum
         markets = await self.fetch_markets()
         min_amount = list(filter(lambda x: (x['symbol'] == symbol), markets))[0]['limits']['amount']['min']
         if amount < min_amount:
             raise ValueError('Amount is under min amount.')
-        
-        # TERV order blacklisting
-        # Vagy l3 orderbook alapján konkrét orderekkel megoldva, vagy l2-vel úgy, hogy feljegyezzük, milyen
-        # ordereket használtunk fel, viszont a mennyiségeik szépen lassan fogynak, és amikor átszámolunk, ha adott
-        # áron van ezen a listán, akkor csak akkorának tekintjük az ordert, amennyivel nagyobb annál, mint ami a listán van
-        # 
-        # Vannak orderek a bookban. Mi elhasználjuk a legjobbakat. Mások is használják őket, meg cancelelik is őket.
-        # Azt kéne tudnunk megoldani, hogy kétszer ne tudjuk elhasználni ugyanazt az ordert. <- ezt az
-        # Viszont idővel visszafolyna a likviditás. Igen, viszont ezt mi leszarjuk
-        # Itt annyit csinál a cucc, hogy átszámol baset quoteba és levonja/hozzáadja a balancehoz
-        # ÁÁCSI
-        # Mindegy, melyik oldaláról fogyasztunk a booknak? Miért a bideket nézi akkor is ha venni akarunk?
-        # Normális esetben azt mondod buy 1000, az exchange fogja magát, és az askokat addig pörgeti, ameddig meg
-        # nincs az 1000.
-        # Ez a szar viszont a bideket pörgeti addig.
-        # Az orderbook asszimetrikus
-        # Tényleg szar az egész?
-        # Attól függően, hogy baseből váltasz át quoteba vagy quoteból basebe, más lesz a slippage
-        # 
+
+        # logging
+        book = await self.fetch_l2_order_book(symbol)
+        slippage_logger.info(f"Orderbook is: {book['asks'] if side == 'buy' else book['bids']}")
+        slippage_logger.info(f'{amount} {self.base} {side} transaction on {symbol} market at KuCoin.')
 
         # updating balances
-        quote_amount = await base_to_quote(amount)
+        amount_in = 'to' if side == 'buy' else 'from'
+        quote_amount = virtual_tx(book,side,amount,amount_in)
         if side == 'buy' and self.test_balance['free'][self.quote] >= quote_amount:
             self.test_balance['free'][self.base] += amount
             self.test_balance['total'][self.base] += amount

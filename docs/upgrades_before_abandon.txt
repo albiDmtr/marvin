@@ -1,0 +1,11 @@
+Muszáj működnie a cuccnak, egyszerűen nincs olyan, hogy nem megy.
+A stablebotnál 2 dolog kell:
+- Kellően volatilis cuccok (cexeken pl. kucoinon is listázva vannak)
+- Likviditás (KuCoinon is van, de ha nagyon kell, akkor ugye van több cex, vannak szintetikus párok, és van a teljes trx/eos dex ökoszisztéma)
+
+A következő upgradeket csináld sorban, ameddig nem hoz pénzt:
+- Multimarket
+- Limit orders
+- Triarb
+- TRX-es, EOS-os dexek (nincs fee).
+- (Curve (ott konkrétan láttuk, hogy megy) - csak 5k $ felett éri meg)

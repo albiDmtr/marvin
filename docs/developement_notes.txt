@@ -1,0 +1,7 @@
+Rakj erre valami szervezettséget, valaki legyen bevonva, valakinek el kelljen számolnod, hogy megy ez, az ideathonon sem
+volt semmi gondod a 15 órával. Persze a 40 óra maradna, csak ezalatt számot kéne adj valakinek, mi van.
+
+    #	Egyelőre leszarjuk a multimarketet, de amikor meglesz, tényleg úgy kéne, hogy egy fő manager van,
+    # 	és a stratok ígérnek a potential returnt, időt, és időtartamot, ameddig a lehetőség még fennáll, és a manager
+    #	intézi, hogy a pénz mindig jó helyen legyen, és mindig jó cucc kapja. Így már egybe a multistrat is megvan, és
+    #	nem bonyibb ez, mint külön a multimarket depeget megoldani.

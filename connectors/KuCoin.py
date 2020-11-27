@@ -1,19 +1,20 @@
 import ccxt.async_support as ccxt
-import connectors.kucoin_sandbox as kucoin_sandbox
 import os.path
 import time
 import json
 import asyncio
 import logging
 import hypers
+# hue
+from helpers import virtual_tx
 
 # configuring logger
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+logging.basicConfig(format='{"type":"%(levelname)s","time":%(asctime)s,"msg":"%(message)s"}', level=logging.INFO)
 
 except_count = 0
 while except_count < hypers.HTTP_API_retry_count:
 	try:
-		KuCoin = kucoin_sandbox.sandbox_kucoin(balance={'free':{'DAI':500,'USDT':500},'used':{'DAI':0,'USDT':0},'total':{'DAI':500,'USDT':500}},config={
+		KuCoin = ccxt.kucoin({
 			'enableRateLimit': True
 		})
 		# Switching to sandbox
@@ -33,10 +34,17 @@ while except_count < hypers.HTTP_API_retry_count:
 			logging.error(f'KuCoin connector was unable to initialise {except_count} times. Error: {e}')
 			raise
 
-async def create_market(pair):
-	obj = market(pair)
-	await obj._init()
-	return obj
+async def create_market(pairs):
+	pairs = pairs.split(', ')
+	objs = []
+	for pair in pairs:
+		obj = market(pair)
+		await obj._init()
+		objs.append(obj)
+	if len(objs) == 1:	
+		return objs[0]
+	else:
+		return objs
 
 class market:
 	def __init__(self, pair):
@@ -47,8 +55,6 @@ class market:
 
 	async def _init(self):
 		await self.ex.load_markets()
-		self.balance = await self.get_balance('total')
-		self.balance = {'base' : self.balance[self.base] if self.base in self.balance.keys() else 0, 'quote' : self.balance[self.quote] if self.quote in self.balance.keys() else 0}
 
 	async def create_price_store(self, dp_count, res, pair, loop):
 		obj = self.price_store()
@@ -188,8 +194,18 @@ class market:
 		while except_count < hypers.HTTP_API_retry_count:
 			try:
 				# funds_type: free/used/total
-				fecthed_bal = await self.ex.fetch_balance()
-				balance = fecthed_bal[funds_type][currency] if currency else fecthed_bal[funds_type]
+				fetched_bal = await self.ex.fetch_balance()
+				if currency:
+					if currency in fetched_bal[funds_type]:
+						balance = fetched_bal[funds_type][currency]
+					else:
+						balance = 0
+				else:
+					balance = fetched_bal[funds_type]
+					if self.base not in fetched_bal[funds_type]:
+						fetched_bal[funds_type][self.base] = 0
+					if self.quote not in fetched_bal[funds_type]:
+						fetched_bal[funds_type][self.quote] = 0
 				except_count = 0
 				return balance
 			except Exception as e:
@@ -199,7 +215,8 @@ class market:
 					logging.error(f'KuCoin Get balance failed {except_count} times. Error: {e}')
 					raise
 
-	async def swap_to(self, currency_to_buy,order_type,swap_to_amount=False,swap_from_amount=False,cut_overspending=True):
+	# magától cutolja az orderbook végénél, tehát nem biztos, hogy hogy annyit swapol, mint mondva van neki
+	async def swap_to(self, currency_to_buy,order_type,swap_to_amount=False,swap_from_amount=False,cut_overspending=True,limit_rate=False):
 
 		# checking if amount given
 		if not swap_to_amount and not swap_from_amount:
@@ -212,96 +229,115 @@ class market:
 			direction = 'sell'
 		else:
 			raise ValueError(f'{currency_to_buy.capitalize()} cannot be traded on {self.pair} market.')
-
-		# checking if order type is market
-		if order_type != 'market':
-			raise NotImplementedError(f'{order_type.capitalize()} order type is currently not supported.')
-		# at market orders, there can only be one of swap_to_amount and swap_from_amount specified
-		if bool(swap_to_amount) == bool(swap_from_amount):
-			raise ValueError('Swap is supposed to happen at market price, cannot be both swap_to_amount and swap_from_amount specified.')
-
-		# translating % amounts to normal amounts
-		from_currency = self.pair.split('/')[1] if currency_to_buy in self.pair.split('/')[0] else self.pair.split('/')[0]
-		if '%' in str(swap_to_amount):
-			rate = int(swap_to_amount.split('%')[0])/100
-			amount = [self.get_balance('free',currency=from_currency)*rate,'from']
-		elif '%' in str(swap_from_amount):
-			rate = int(swap_from_amount.split('%')[0])/100
-			amount = [self.get_balance('free',currency=from_currency)*rate,'from']
-		elif swap_to_amount:
-			amount = [swap_to_amount,'to']
-		elif swap_from_amount:
-			amount = [swap_from_amount,'from']
-
-		# verified, only set dismiss_liquidity_error to True when using market orders!
-		async def quote_to_base(quote_amount, dismiss_liquidity_error=False):
-			# ezt mi okozhatja?
-			#
-			base_amount = 0
-			quote_left = quote_amount
-			# baset akarunk venni, buyolni akarunk, tehát mi bidelnénk ha ez limit lenne, askot veszünk
-			orders = await self.get_current_book()
-			orders = orders['asks']
-			for current_order in orders:
-				# total price of order in qoute
-				current_order_quote_price = current_order[0] * current_order[1]
-				if current_order_quote_price < quote_left:
-					base_amount += current_order[1]
-					quote_left -= current_order_quote_price
-				else:
-					base_amount += (quote_left / current_order_quote_price)*current_order[1]
-					quote_left = 0
-					break
-			if quote_left != 0 and not dismiss_liquidity_error:
-				raise ValueError('Not enough liquidity to perform transaction.')
-			return base_amount
 		
-		# calculating amount, creating order
-		except_count = 0
-		while except_count < hypers.HTTP_API_retry_count:
-			try:
-				# verified, checking for overspending
-				if cut_overspending:
-					# if spending quote
+		# transforming amount to array format
+		amount = []
+		if swap_to_amount:
+			amount += [swap_to_amount,'to']
+		if swap_from_amount:
+			amount += [swap_from_amount,'from']
+
+		# logic for market orders!
+		if order_type == 'market':
+			# at market orders, there can only be one of swap_to_amount and swap_from_amount specified
+			if bool(swap_to_amount) == bool(swap_from_amount):
+				raise ValueError('Swap is supposed to happen at market price, cannot be both swap_to_amount and swap_from_amount specified.')
+			
+			# calculating amount, creating order
+			except_count = 0
+			while except_count < hypers.HTTP_API_retry_count:
+				try:
+					# verified, checking for overspending
+					if cut_overspending:
+						book = await self.get_current_book()
+						# if spending quote
+						if direction == 'buy':
+							# if amount was given is base
+							if amount[1] == 'to':
+								amount[0] = min([amount[0], virtual_tx(book, 'buy', await self.get_balance('total',self.quote), 'from', dismiss_liquidity_error=True)])
+							# if amount was given in quote
+							else:
+								amount[0] = min([amount[0], await self.get_balance('total',self.quote)])
+						# if spending base
+						else:
+							# if amount was given in quote
+							if amount[1] == 'to':
+								amount[0] =  min([virtual_tx(book, 'sell', amount[0], 'to', dismiss_liquidity_error=True) , await self.get_balance('total',self.base)])
+								amount[1] = 'from'
+							# if amount was given in base
+							else:
+								amount[0] = min([amount[0], await self.get_balance('total',self.base)])
+
+					# Changing amount to be in base currency
 					if direction == 'buy':
-						# if amount was given is base
-						if amount[1] == 'to':
-							amount[0] = min([amount[0], await quote_to_base(self.balance['quote'], dismiss_liquidity_error=True)])
-						# if amount was given in quote
-						else:
-							amount[0] = min([amount[0], self.balance['quote']])
-					# if spending base
+						amount_in_base = amount[0] if amount[1] == 'to' else virtual_tx(book,'buy',amount[0],'from',dismiss_liquidity_error=True)
+					elif direction == 'sell':
+						amount_in_base = amount[0] if amount[1] == 'from' else virtual_tx(book,'sell',amount[0],'to',dismiss_liquidity_error=True)
+
+					await self.ex.create_order(self.pair, order_type, direction, amount_in_base)
+					except_count = 0
+					break
+				except Exception as e:
+					except_count += 1
+					logging.warning(f'KuCoin Unable to create order ({except_count}. try). Error: {e}')
+					if except_count >= hypers.HTTP_API_retry_count:
+						logging.error(f'KuCoin order creation failed {except_count} times. Error: {e}')
+						raise
+		# logic for limit orders!
+		elif order_type == 'limit':
+			# calculating amount, creating order
+			while except_count < hypers.HTTP_API_retry_count:
+				try:
+					if swap_from_amount and swap_to_amount:
+						limit_rate = swap_from_amount/swap_to_amount if direction == 'buy' else swap_to_amount/swap_from_amount
+						amount_in_base = swap_to_amount if direction == 'buy' else swap_from_amount
+					elif limit_rate and swap_to_amount:
+						amount_in_base = swap_to_amount if direction == 'buy' else swap_to_amount/limit_rate
+					elif limit_rate and swap_from_amount:
+						amount_in_base = swap_from_amount/limit_rate if direction == 'buy' else swap_from_amount
 					else:
-						# if amount was given in quote
-						if amount[1] == 'to':
-							amount[0] =  min([await quote_to_base(amount[0], dismiss_liquidity_error=True),self.balance['base']])
-							amount[1] = 'from'
-						# if amount was given in base
+						raise ValueError('Not enough information given to execute limit order.')
+					
+					# cut overspending
+					if cut_overspending:
+						if direction == 'sell':
+							base_bal = await self.get_balance('free',currency=self.pair.split('/')[0])
+							amount_in_base = min([amount_in_base, base_bal])
 						else:
-							amount[0] = min([amount[0], self.balance['base']])
+							quote_bal = await self.get_balance('free',currency=self.pair.split('/')[1])
+							amount_in_base = min([amount_in_base, quote_bal/limit_rate ])
 
-				# Changing amount to be in base currency
-				if direction == 'buy':
-					amount_in_base = amount[0] if amount[1] == 'to' else await quote_to_base(amount[0])
-				elif direction == 'sell':
-					amount_in_base = amount[0] if amount[1] == 'from' else await quote_to_base(amount[0])
-				
-				# mi történik?
-				# a strat rendesen meghívja ezt, ez meg is csinálja az ordert, de valami miatt retryol.
-				# csak másodjára lesz except
-				# 
+					# Sanity check & order creation
+					# Assumptions: direction is correct
+					current_rates = await self.get_current_price('both')
+					if self.pair in hypers.limit_order_accepted_rate_range:
+						if ((direction == 'buy' and hypers.limit_order_accepted_rate_range[self.pair][1] >= limit_rate and
+						current_rates['ask'] >= limit_rate) or
+						(direction == 'sell' and hypers.limit_order_accepted_rate_range[self.pair][0] <= limit_rate and
+						current_rates['bid'] <= limit_rate)):
+							await self.ex.create_order(self.pair, order_type, direction, amount_in_base, limit_rate)
+							# TODO küldjön üzit, hogy ordert csinált (marketnél is)
+						else:
+							raise ValueError('Nínónínó Sanity check failed!!')
+					else:
+						"""if ((direction == 'buy' and current_rates['ask'] >= limit_rate) or
+						(direction == 'sell' and current_rates['bid'] <= limit_rate)):
+							await self.ex.create_order(self.pair, order_type, direction, amount_in_base, limit_rate)
+							# TODO küldjön üzit, hogy ordert csinált (marketnél is)
+						else:
+							raise ValueError('Nínónínó Sanity check failed!!')"""
+						raise NotImplementedError('Placing limit orders without accepted rate range hyper is currently unsupported.')
 
-				await self.ex.create_order(self.pair, order_type, direction, amount_in_base)
-				self.new_balance = await self.get_balance('total')
-				self.balance = {'base' : self.new_balance[self.base], 'quote' : self.new_balance[self.quote]}
-				except_count = 0
-				break
-			except Exception as e:
-				except_count += 1
-				logging.warning(f'KuCoin Unable to create order ({except_count}. try). Error: {e}')
-				if except_count >= hypers.HTTP_API_retry_count:
-					logging.error(f'KuCoin order creation failed {except_count} times. Error: {e}')
-					raise
+					except_count = 0
+					break
+				except Exception as e:
+					except_count += 1
+					logging.warning(f'KuCoin Unable to create limit order ({except_count}. try). Error: {e}')
+					if except_count >= hypers.HTTP_API_retry_count:
+						logging.error(f'KuCoin limit order creation failed {except_count} times. Error: {e}')
+						raise
+
+
 
 	async def get_trading_fees(self):
 		return {'taker': self.ex.fees['trading']['taker'],'maker': self.ex.fees['trading']['maker']}

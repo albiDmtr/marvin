@@ -86,3 +86,28 @@
 2020-11-05 10:50:27,844 INFO Swapped to USDT at 0.9971, balances: {'base': 989.05892, 'quote': 12.533280623599936}
 2020-11-05 10:50:31,803 INFO Swapped to USDT at 0.9971, balances: {'base': 1001.6286528488615, 'quote': 0.0037709198546593825}
 2020-11-05 12:28:15,708 INFO Market initialised, balances: {'base': 500, 'quote': 500}
+2020-11-09 09:55:54,609 INFO Market initialised, balances: {'base': 500, 'quote': 500}
+2020-11-11 16:28:42,741 INFO Market initialised, balances: {'base': 500, 'quote': 500}
+2020-11-12 09:39:34,930 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-12 09:41:15,508 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-12 09:44:36,737 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-12 09:44:40,161 INFO Swapped to DAI at 0.9966, max_size is: 55939.854382999896, balances: {'DAI': 998.3, 'USDT': 0}
+2020-11-12 09:45:42,275 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-12 09:45:49,749 INFO Swapped to DAI at 0.9966, max_size is: 55939.854382999896, balances: {'DAI': 998.3, 'USDT': 0}
+2020-11-12 09:48:02,232 INFO Swapped to USDT at 0.9968, balances: {'DAI': 128.45597494649996, 'USDT': 998.2311432650015}
+2020-11-12 09:48:38,917 INFO Swapped to DAI at 0.9966, max_size is: 55939.854382999896, balances: {'DAI': 1123.2931323244006, 'USDT': 0.0}
+2020-11-12 09:48:52,737 INFO Swapped to USDT at 0.9968, balances: {'DAI': 253.44910727090064, 'USDT': 1123.0869342193523}
+2020-11-12 09:54:22,103 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-12 09:56:42,085 INFO Swapped to DAI at 0.9966, max_size is: 55939.854382999896, balances: {'DAI': 998.3000319261, 'USDT': 0}
+2020-11-12 10:10:20,528 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-12 10:11:23,266 INFO Swapped to DAI at 0.9967, max_size is: 56308.958033999894, balances: {'DAI': 998.3369103651, 'USDT': 0}
+2020-11-12 10:12:43,560 INFO Swapped to USDT at 0.9989, balances: {'DAI': 0.0, 'USDT': 998.2780331751005}
+2020-11-12 10:36:36,064 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-12 10:36:58,352 INFO Swapped to USDT at 0.9988, balances: {'DAI': 0.0005000000001018634, 'USDT': 999.727898614503}
+2020-11-12 10:37:18,767 INFO Swapped to DAI at 0.9967, max_size is: 56068.0925559999, balances: {'DAI': 995.3458187527547, 'USDT': 0.0}
+2020-11-12 10:37:41,776 INFO Swapped to USDT at 0.9988, balances: {'DAI': 0.0009953458189784214, 'USDT': 994.3132828754319}
+2020-11-12 16:05:33,360 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-12 16:24:12,636 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500}
+2020-11-23 16:44:04,607 INFO Market initialised, balances: {'DAI': 500, 'USDT': 500, 'BTC': 0}
+2020-11-23 16:45:36,662 INFO Market initialised, balances: {'BTC': 500, 'USDT': 500}
+2020-11-23 16:45:40,440 INFO Swapped to BTC at 18303.4, balances: {'BTC': 500.02729001169183, 'USDT': 0.0005000000001018634}
