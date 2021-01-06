@@ -3,12 +3,10 @@ import os.path
 import time
 import json
 import asyncio
-import logging
+import marvin_console
 import hypers
+import interface.push_notifications
 from helpers import virtual_tx
-
-# configuring logger
-logging.basicConfig(format='{"type":"%(levelname)s","time":%(asctime)s,"msg":"%(message)s"}', level=logging.INFO)
 
 except_count = 0
 while except_count < hypers.HTTP_API_retry_count:
@@ -17,7 +15,7 @@ while except_count < hypers.HTTP_API_retry_count:
 			'enableRateLimit': True
 		})
 		# Switching to sandbox
-		#KuCoin.urls['api'] = KuCoin.urls['test']
+		# KuCoin.urls['api'] = KuCoin.urls['test']
 		with open(os.path.dirname(__file__) + '/../keys/KuCoin_LIVE.json', 'r') as json_file:
 			keys = json.load(json_file)
 			KuCoin.apiKey = keys['Public']
@@ -28,9 +26,9 @@ while except_count < hypers.HTTP_API_retry_count:
 		break
 	except Exception as e:
 		except_count += 1
-		logging.warning(f'Unable to initialise KuCoin connector ({except_count}. try).')
+		marvin_console.warning(f'Unable to initialise KuCoin connector ({except_count}. try).')
 		if except_count >= hypers.HTTP_API_retry_count:
-			logging.error(f'KuCoin connector was unable to initialise {except_count} times. Error: {e}')
+			marvin_console.error(f'KuCoin connector was unable to initialise {except_count} times. Error: {e}')
 			raise
 
 async def create_market(pairs):
@@ -75,7 +73,25 @@ class market:
 			}
 			self.__res_in_s = self.__time_increment[True][0] * int( self.__res.split( self.__time_increment[True][1] )[0] )
 			since = ( time.time() - (self.__res_in_s*self.dp_count) )* 1000
-			self.__prices = [x[0:2] for x in await self.__get_historical_OHLCV(since,res=self.__res)]
+
+			self.__historical = await self.__get_historical_OHLCV(since,res=self.__res)
+			if self.__historical:
+				self.__prices = [x[0:2] for x in self.__historical]
+			else:
+				marvin_console.info('Unable to get OHLCV, used current prices instead.')
+				except_count = 0
+				while except_count < hypers.HTTP_API_retry_count:
+					try:
+						self.__current = await self.ex.fetchTicker(self.pair)
+						self.__prices = [[self.__current['timestamp'], (self.__current['bid'] + self.__current['ask']) / 2] for x in range(len(self.dp_count))]
+						except_count = 0
+						break
+					except Exception as e:
+						except_count += 1
+						marvin_console.warning(f'KuCoin Unable to get current price at init. ({except_count}. try).')
+						if except_count >= hypers.HTTP_API_retry_count:
+							marvin_console.error(f'KuCoin Get current price at init. {except_count} times. Error: {e}')
+							raise
 
 			# remove additional dps
 			if len(self.__prices) > dp_count:
@@ -99,15 +115,21 @@ class market:
 					if self.temporary_dps_added:
 						del self.__prices[-self.temporary_dps_added:]
 						self.temporary_dps_added = False
-					self.__prices.append([self.__current_ticker['timestamp'],(self.__current_ticker['bid']+self.__current_ticker['ask'])/2])
+					
+					if not None in self.__current_ticker.values():
+						self.__prices.append([self.__current_ticker['timestamp'],(self.__current_ticker['bid']+self.__current_ticker['ask'])/2])
+					else:
+						self.__prices.append(self.__prices[-1])
+
 					del self.__prices[0]
+					marvin_console.info('Price store updated.', custom_field={'current value':self.__prices})
 					await asyncio.sleep(self.__res_in_s)
 				except Exception as e:
 					except_count += 1
-					logging.warning(f'KuCoin Price store is unable to update prices ({except_count}. try).')
+					marvin_console.warning(f'KuCoin Price store is unable to update prices ({except_count}. try).')
 					await asyncio.sleep(hypers.HTTP_API_retry_sleep_s)
 					if except_count >= hypers.HTTP_API_retry_count:
-						logging.error(f'KuCoin Price store was unable to update prices {except_count} times. Error: {e}')
+						marvin_console.error(f'KuCoin Price store was unable to update prices {except_count} times. Error: {e}')
 						raise
 
 		async def __get_historical_OHLCV(self, since,til='now',res='5m'):
@@ -125,19 +147,19 @@ class market:
 				try:
 					current_data = await self.ex.fetch_ohlcv(symbol=self.pair, timeframe=res, since=current_last_stamp)
 					if len(data) and current_data[-1] == data[-1]:
-						logging.warning('fetchOHLCV last candle delay!')
+						marvin_console.warning('fetchOHLCV last candle delay!')
 						break
 					if len(data) and current_data[0] == data[0]:
-						logging.warning('Accidental FetchOHLCV datapoint duplication!')
+						marvin_console.warning('Accidental FetchOHLCV datapoint duplication!')
 					data += current_data
 					current_last_stamp = data[-1][0]
 					except_count = 0
 				except Exception as e:
 					except_count += 1
-					logging.warning(f'KuCoin Unable to fetch historical OHLCV ({except_count}. try).')
+					marvin_console.warning(f'KuCoin Unable to fetch historical OHLCV ({except_count}. try).')
 					if except_count >= hypers.HTTP_API_retry_count:
-						logging.error(f'Kucoin was unable to fetch historical OHLCV {except_count} times. Error: {e}')
-						raise
+						marvin_console.error(f'Kucoin was unable to fetch historical OHLCV {except_count} times. Error: {e}')
+						#raise
 			return data
 
 		def get_past_prices(self):
@@ -156,13 +178,14 @@ class market:
 		while except_count < hypers.HTTP_API_retry_count:
 			try:
 				self.__current = await self.ex.fetchTicker(self.pair)
+				marvin_console.info('Current rates',custom_field={'rates':self.__current})
 				except_count = 0
 				break
 			except Exception as e:
 				except_count += 1
-				logging.warning(f'KuCoin Unable to get current mid price ({except_count}. try).')
+				marvin_console.warning(f'KuCoin Unable to get current mid price ({except_count}. try).')
 				if except_count >= hypers.HTTP_API_retry_count:
-					logging.error(f'KuCoin Get current mid price failed {except_count} times. Error: {e}')
+					marvin_console.error(f'KuCoin Get current mid price failed {except_count} times. Error: {e}')
 					raise
 		if side == 'mid':
 			return (self.__current['bid']+self.__current['ask'])/2
@@ -183,9 +206,9 @@ class market:
 				return val
 			except Exception as e:
 				except_count += 1
-				logging.warning(f'KuCoin Unable to get current orderbook ({except_count}. try).')
+				marvin_console.warning(f'KuCoin Unable to get current orderbook ({except_count}. try).')
 				if except_count >= hypers.HTTP_API_retry_count:
-					logging.error(f'KuCoin Get current mid price failed {except_count} times. Error: {e}')
+					marvin_console.error(f'KuCoin Get current mid price failed {except_count} times. Error: {e}')
 					raise
 
 	async def get_balance(self, funds_type, currency=False):
@@ -209,9 +232,9 @@ class market:
 				return balance
 			except Exception as e:
 				except_count += 1
-				logging.warning(f'KuCoin Unable to get balance ({except_count}. try).')
+				marvin_console.warning(f'KuCoin Unable to get balance ({except_count}. try).')
 				if except_count >= hypers.HTTP_API_retry_count:
-					logging.error(f'KuCoin Get balance failed {except_count} times. Error: {e}')
+					marvin_console.error(f'KuCoin Get balance failed {except_count} times. Error: {e}')
 					raise
 
 	# magától cutolja az orderbook végénél, tehát nem biztos, hogy hogy annyit swapol, mint mondva van neki
@@ -278,11 +301,12 @@ class market:
 					break
 				except Exception as e:
 					except_count += 1
-					logging.warning(f'KuCoin Unable to create order ({except_count}. try). Error: {e}')
+					marvin_console.warning(f'KuCoin Unable to create order ({except_count}. try). Error: {e}')
 					if except_count >= hypers.HTTP_API_retry_count:
-						logging.error(f'KuCoin order creation failed {except_count} times. Error: {e}')
+						marvin_console.error(f'KuCoin order creation failed {except_count} times. Error: {e}')
 						raise
 		# logic for limit orders!
+		# TODO ez még itt nincs letesztelve
 		elif order_type == 'limit':
 			# calculating amount, creating order
 			while except_count < hypers.HTTP_API_retry_count:
@@ -331,9 +355,9 @@ class market:
 					break
 				except Exception as e:
 					except_count += 1
-					logging.warning(f'KuCoin Unable to create limit order ({except_count}. try). Error: {e}')
+					marvin_console.warning(f'KuCoin Unable to create limit order ({except_count}. try). Error: {e}')
 					if except_count >= hypers.HTTP_API_retry_count:
-						logging.error(f'KuCoin limit order creation failed {except_count} times. Error: {e}')
+						marvin_console.error(f'KuCoin limit order creation failed {except_count} times. Error: {e}')
 						raise
 
 
@@ -350,10 +374,10 @@ class market:
 				return min_amount
 			except Exception as e:
 				except_count += 1
-				logging.warning(f'KuCoin Unable to get min amounts ({except_count}. try).')
+				marvin_console.warning(f'KuCoin Unable to get min amounts ({except_count}. try).')
 				await asyncio.sleep(hypers.HTTP_API_retry_sleep_s)
 				if except_count >= hypers.HTTP_API_retry_count:
-					logging.error(f'KuCoin get min amount failed {except_count} times. Error: {e}')
+					marvin_console.error(f'KuCoin get min amount failed {except_count} times. Error: {e}')
 					raise
 
 	async def drop_exchange(self):
