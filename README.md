@@ -1,6 +1,7 @@
-<img src="https://i.ibb.co/0YFr5LX/logo-long.png"  width="600" height="auto">
+<img src="https://i.ibb.co/0YFr5LX/logo-long.png"  width="800" height="auto">
 
 <h1 style="font-family: Roboto;">◤¯¯◥ marvin</h1>
+
 **A trading bot for trading stablecoins on the KuCoin exchange**
 
 This is a project I started in 2020 when I became interested in automated cryptocurrency trading and that's when the bulk of the code was written. It was written in Python and uses a strategy that profits off instances when stablecoin pairs such as `DAI/USDC` or `USDT/USDC` depeg, that is the rate goes significantly below or above the 1:1 ratio. Given this is a simple strategy, I was able to achieve some success with it but nothing crazy.
@@ -8,13 +9,13 @@ This is a project I started in 2020 when I became interested in automated crypto
 The bot is also easily extendable, so new exchanges and strategies can be added effortlessly.
 
 # The strategy
-The bot trades on stablecoin pairs, which are cryptocurrencies that have their value pegged to the dollar either because they are backed by the dollar or because of a central bank algorithm. Because of this, the exchange rate of all stablecoin pairs should be 1, but in the short term there is some fluctuation from the 1:1 ratio. We assume that, in the long run, the price will revert near it's intended value. That's what the bot uses to spot opportunities when the price is unusually low or high and uses it to make profitable trades.
-**Here is how it's intended to work:**
+The bot trades on stablecoin pairs, which are cryptocurrencies that have their value pegged to the dollar either because they are backed by the dollar or because of a central bank algorithm. Because of this, the exchange rate of all stablecoin pairs should be 1, but in the short term there is some fluctuation from the 1:1 ratio. We assume that, in the long run, the price will revert near it's intended value. That's what the bot uses to spot opportunities when the price is unusually low or high and uses it to make profitable trades.<br>**Here is how it's intended to work:**
 <img src="https://i.ibb.co/cwHgHRV/example.png"  width="800" height="auto">
 
 
 
 # Setup and usage
+
 <div style="background-color:#ed736b; color:white; padding:5px; border-radius:4px; border:solid 3px #c94f47;">**DISCLAIMER: The bot hasn't been tested thoroughly. Bugs and crashes are possible hence I don't recommend using it live without understanding the code.**</div>
 
 ## Setup
