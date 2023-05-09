@@ -1,4 +1,4 @@
-<img src="https://i.ibb.co/0YFr5LX/logo-long.png"  width="800" height="auto">
+<img src="https://raw.githubusercontent.com/albiDmtr/marvin/main/logo_long.png"  width="800" height="auto">
 
 <h1 style="font-family: Roboto;">◤¯¯◥ marvin</h1>
 
@@ -10,7 +10,7 @@ The bot is also easily extendable, so new exchanges and strategies can be added 
 
 # The strategy
 The bot trades on stablecoin pairs, which are cryptocurrencies that have their value pegged to the dollar either because they are backed by the dollar or because of a central bank algorithm. Because of this, the exchange rate of all stablecoin pairs should be 1, but in the short term there is some fluctuation from the 1:1 ratio. We assume that, in the long run, the price will revert near it's intended value. That's what the bot uses to spot opportunities when the price is unusually low or high and uses it to make profitable trades.<br>**Here is how it's intended to work:**
-<img src="https://i.ibb.co/cwHgHRV/example.png"  width="800" height="auto">
+<img src="https://raw.githubusercontent.com/albiDmtr/marvin/main/example.png"  width="800" height="auto">
 
 
 
