@@ -1,4 +1,5 @@
-keys/
-logs/
+keys/*
+logs/*
 unused/
+client_secrets.json
 test.py

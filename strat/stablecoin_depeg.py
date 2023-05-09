@@ -18,14 +18,12 @@ class strat():
 		self.ma_res = strat_specific_params['ma_res']
 		self.market = market
 
-	# ITTARTUNK a kód validálással, olyan sorrendben megyünk, ahogy tényleg történnek a dolgok
 	async def _init(self, loop):
 		self.price_store = await self.market.create_price_store(self.ma_dp_count, self.ma_res, self.market.pair, loop)
 		self.fees = await self.market.get_trading_fees()
 		self.min_amount = await self.market.get_min_amount()
 		marvin_console.info("market initialized", custom_field={"balances":await self.market.get_balance("total")})
 
-	# verified (legfeljebb 1 orderrel téved list slicing miatt, azt meg leszarjuk)
 	async def calculate_max_order_size(self, side, threshold, past_prices):
 			self.orders = await self.market.get_current_book()
 			self.orders = self.orders[side]
@@ -34,7 +32,6 @@ class strat():
 			marvin_console.info('calculating size',custom_field={"side":side,"threshold":threshold,"average":self.average,"book":self.orders})
 
 			def amount_above(limit, fees=False):
-				# ez egyet téved
 				if fees:
 					self.applied_fees = self.fees['taker']
 				else:

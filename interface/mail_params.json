@@ -1,0 +1,5 @@
+{
+    "bot_gmail_user" : "your-bot-email-address-here",
+    "bot_gmail_password" : "your-bot-gmail-password-here",
+    "receiver_address" : "your-email-address-here"
+}

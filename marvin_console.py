@@ -1,14 +1,12 @@
 import time
-#import logging
 
 def info(msg, custom_field={}):
-    #logger.info({**{'type':'info','msg':msg},**custom_field,**{'time':time.time()}})
     print({**{'type':'info','msg':msg},**custom_field,**{'time':time.time()}})
+
 def warning(msg, custom_field={}):
-    #logger.warning({**{'type':'warning','msg':msg},**custom_field,**{'time':time.time()}})
     print({**{'type':'warning','msg':msg},**custom_field,**{'time':time.time()}})
+
 def error(msg, custom_field={}):
-    #logger.error({**{'type':'error','msg':msg},**custom_field,**{'time':time.time()}})
     print({**{'type':'error','msg':msg},**custom_field,**{'time':time.time()}})
 
 marvin_logo = "◤¯¯◥"

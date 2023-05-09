@@ -11,7 +11,7 @@ slippage_logger.addHandler(slippage_hdlr)
 class sandbox_kucoin(ccxt.kucoin):
     def __init__(self, balance=None, config={}):
         super().__init__(config=config)
-        # nézze meg initkor a valódi balanceot, majd tradekkor változtassa
+        # use test balance if available else use real balance on exchange
         self.test_balance = balance if balance else self.__fetch_real_balance()
     
     async def create_order(self, symbol, type, side, amount, price=None, params={}):
@@ -63,16 +63,6 @@ class sandbox_kucoin(ccxt.kucoin):
             options = self.safe_value(self.options, 'fetchBalance', {})
             type = self.safe_string(options, 'type', 'trade')
         response = self.privateGetAccounts(self.extend(request, params))
-        #
-        #     {
-        #         "code":"200000",
-        #         "data":[
-        #             {"balance":"0.00009788","available":"0.00009788","holds":"0","currency":"BTC","id":"5c6a4fd399a1d81c4f9cc4d0","type":"trade"},
-        #             {"balance":"3.41060034","available":"3.41060034","holds":"0","currency":"SOUL","id":"5c6a4d5d99a1d8182d37046d","type":"trade"},
-        #             {"balance":"0.01562641","available":"0.01562641","holds":"0","currency":"NEO","id":"5c6a4f1199a1d8165a99edb1","type":"trade"},
-        #         ]
-        #     }
-        #
         data = self.safe_value(response, 'data', [])
         result = {'info': response}
         for i in range(0, len(data)):

@@ -14,8 +14,6 @@ while except_count < hypers.HTTP_API_retry_count:
 		KuCoin = ccxt.kucoin({
 			'enableRateLimit': True
 		})
-		# Switching to sandbox
-		# KuCoin.urls['api'] = KuCoin.urls['test']
 		with open(os.path.dirname(__file__) + '/../keys/KuCoin_LIVE.json', 'r') as json_file:
 			keys = json.load(json_file)
 			KuCoin.apiKey = keys['Public']
@@ -237,7 +235,6 @@ class market:
 					marvin_console.error(f'KuCoin Get balance failed {except_count} times. Error: {e}')
 					raise
 
-	# magától cutolja az orderbook végénél, tehát nem biztos, hogy hogy annyit swapol, mint mondva van neki
 	async def swap_to(self, currency_to_buy,order_type,swap_to_amount=False,swap_from_amount=False,cut_overspending=True,limit_rate=False):
 
 		# checking if amount given
@@ -306,7 +303,6 @@ class market:
 						marvin_console.error(f'KuCoin order creation failed {except_count} times. Error: {e}')
 						raise
 		# logic for limit orders!
-		# TODO ez még itt nincs letesztelve
 		elif order_type == 'limit':
 			# calculating amount, creating order
 			while except_count < hypers.HTTP_API_retry_count:
@@ -339,16 +335,9 @@ class market:
 						(direction == 'sell' and hypers.limit_order_accepted_rate_range[self.pair][0] <= limit_rate and
 						current_rates['bid'] <= limit_rate)):
 							await self.ex.create_order(self.pair, order_type, direction, amount_in_base, limit_rate)
-							# TODO küldjön üzit, hogy ordert csinált (marketnél is)
 						else:
 							raise ValueError('Nínónínó Sanity check failed!!')
 					else:
-						"""if ((direction == 'buy' and current_rates['ask'] >= limit_rate) or
-						(direction == 'sell' and current_rates['bid'] <= limit_rate)):
-							await self.ex.create_order(self.pair, order_type, direction, amount_in_base, limit_rate)
-							# TODO küldjön üzit, hogy ordert csinált (marketnél is)
-						else:
-							raise ValueError('Nínónínó Sanity check failed!!')"""
 						raise NotImplementedError('Placing limit orders without accepted rate range hyper is currently unsupported.')
 
 					except_count = 0
