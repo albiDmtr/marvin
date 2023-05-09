@@ -16,7 +16,7 @@ The bot trades on stablecoin pairs, which are cryptocurrencies that have their v
 
 # Setup and usage
 
-<div style="background-color:#ed736b; color:white; padding:5px; border-radius:4px; border:solid 3px #c94f47;">**DISCLAIMER: The bot hasn't been tested thoroughly. Bugs and crashes are possible hence I don't recommend using it live without understanding the code.**</div>
+#### DISCLAIMER: The bot hasn't been tested thoroughly. Bugs and crashes are possible hence I don't recommend using it live without understanding the code.
 
 ## Setup
 1. **Clone this repository to have a copy of the files locally**
