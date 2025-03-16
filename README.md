@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/albiDmtr/marvin/main/logo_long.png"  width="800" height="auto">
 
-<h1 style="font-family: Roboto;">◤¯¯◥ marvin</h1>
+<h1 style="font-family: 'Roboto', sans-serif;">◤¯¯◥ marvin</h1>
 
 **A trading bot for trading stablecoins on the KuCoin exchange**
 
